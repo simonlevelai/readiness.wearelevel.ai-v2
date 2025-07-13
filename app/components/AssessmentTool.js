@@ -1,8 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { ChevronRight, ChevronLeft, Check, AlertCircle, TrendingUp, Users, Shield, Target, Mail, Building, ArrowRight, Download, Clock, Brain, Zap, Sparkles, Heart, Leaf } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
+import PDFReport from './PDFReport';
+import BenchmarkAnalytics from './BenchmarkAnalytics';
+import { BenchmarkService } from '../services/benchmarkService';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -15,32 +20,32 @@ const THEMES = {
   levelai: {
     name: 'Level AI',
     tagline: 'Reclaim your time with AI that actually helps',
-    logo: '🤖',
+    logo: '/images/Level AI Avatar_Circular.png',
     colors: {
-      primary: '#1e40af',
-      primaryHover: '#1e3a8a',
-      primaryLight: 'bg-blue-50',
-      primaryLightText: 'text-blue-900',
-      primaryLightBorder: 'border-blue-200',
-      accent: '#3730a3',
-      gradient: 'from-blue-500 to-indigo-600',
-      bgGradient: 'from-blue-50 to-indigo-50'
+      primary: '#FEDA00',
+      primaryHover: '#E5C400',
+      primaryLight: 'bg-primary-50',
+      primaryLightText: 'text-neutral-500',
+      primaryLightBorder: 'border-primary-200',
+      accent: '#296B42',
+      gradient: 'from-primary-400 to-primary-500',
+      bgGradient: 'from-surface-400 to-surface-300'
     },
     messaging: {
-      heroTitle: 'AI Readiness Assessment',
-      heroSubtitle: 'Discover how AI can transform your organisation',
-      completionTitle: 'Assessment Complete!',
-      completionText: 'Enter your details to receive your personalised AI readiness report.',
-      reportTitle: 'Your AI Readiness Report',
-      ctaButton: 'Get AI Strategy Consultation',
-      timeUnit: 'hours of deep work',
+      heroTitle: 'How AI-Ready Are You?',
+      heroSubtitle: 'Let\'s find out how much time AI could give back to your team',
+      completionTitle: 'Nice work! 🎉',
+      completionText: 'Get your personalised roadmap for reclaiming time with AI that actually works.',
+      reportTitle: 'Your Time-Reclaiming AI Roadmap',
+      ctaButton: 'Let\'s Chat About Your AI Journey',
+      timeUnit: 'hours back to your team each month',
       certification: 'Level AI Partner'
     },
     sections: {
-      'current-state': { icon: <Sparkles className="w-5 h-5" />, title: 'Current Tech Stack' },
-      'readiness': { icon: <TrendingUp className="w-5 h-5" />, title: 'AI Readiness' },
-      'ethics': { icon: <Shield className="w-5 h-5" />, title: 'Data & Security' },
-      'future': { icon: <Target className="w-5 h-5" />, title: 'Future Vision' }
+      'current-state': { icon: <Sparkles className="w-5 h-5" />, title: 'Where You\'re At Today' },
+      'readiness': { icon: <TrendingUp className="w-5 h-5" />, title: 'Ready for Takeoff?' },
+      'ethics': { icon: <Shield className="w-5 h-5" />, title: 'Playing It Safe' },
+      'future': { icon: <Target className="w-5 h-5" />, title: 'Dream Big' }
     }
   },
   tech4good: {
@@ -51,7 +56,7 @@ const THEMES = {
       primary: '#059669',
       primaryHover: '#047857',
       primaryLight: 'bg-green-50',
-      primaryLightText: 'text-green-900',
+      primaryLightText: 'text-neutral-500',
       primaryLightBorder: 'border-green-200',
       accent: '#0891b2',
       gradient: 'from-green-500 to-cyan-500',
@@ -82,7 +87,7 @@ const THEMES = {
       primary: '#293f3b',
       primaryHover: '#1f302c',
       primaryLight: 'bg-gray-50',
-      primaryLightText: 'text-gray-900',
+      primaryLightText: 'text-neutral-500',
       primaryLightBorder: 'border-gray-200',
       accent: '#475569',
       gradient: 'from-gray-600 to-gray-800',
@@ -133,6 +138,9 @@ const AssessmentTool = () => {
   });
   const [sessionId, setSessionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [benchmarkData, setBenchmarkData] = useState(null);
+  const [showBenchmarks, setShowBenchmarks] = useState(false);
+  const [benchmarkConsent, setBenchmarkConsent] = useState(true);
 
   // Generate unique session ID on mount
   useEffect(() => {
@@ -169,7 +177,7 @@ const AssessmentTool = () => {
       id: 'current-state',
       title: theme.sections['current-state'].title,
       icon: theme.sections['current-state'].icon,
-      description: 'Let\'s understand where you are today',
+      description: 'Tell us about your current setup (don\'t worry, we won\'t judge!)',
       questions: [
         {
           id: 'team-size',
@@ -212,7 +220,7 @@ const AssessmentTool = () => {
         },
         {
           id: 'time-drains',
-          question: 'What takes up most of your team\'s time?',
+          question: 'What\'s eating up all your team\'s time? (We feel your pain)',
           type: 'multiple',
           weight: 1,
           options: [
@@ -245,7 +253,7 @@ const AssessmentTool = () => {
       icon: theme.sections['readiness'].icon,
       description: theme.name === 'Tech4Good South West' 
         ? 'How prepared is your organisation for digital transformation?'
-        : 'How prepared is your organisation for AI adoption?',
+        : 'Let\'s see if your team is ready to embrace their AI sidekick',
       questions: [
         {
           id: 'leadership',
@@ -309,7 +317,7 @@ const AssessmentTool = () => {
       icon: theme.sections['ethics'].icon,
       description: theme.name === 'Tech4Good South West'
         ? 'Understanding your approach to responsible technology'
-        : 'Understanding your approach to responsible AI',
+        : 'Making sure we keep things above board and human-friendly',
       questions: [
         {
           id: 'data-handling',
@@ -357,7 +365,7 @@ const AssessmentTool = () => {
       id: 'future',
       title: theme.sections['future'].title,
       icon: theme.sections['future'].icon,
-      description: 'What are you hoping to achieve?',
+      description: 'Paint us a picture of your ideal future',
       questions: [
         {
           id: 'productivity-goals',
@@ -492,44 +500,79 @@ const AssessmentTool = () => {
   const getScoreInterpretation = (score) => {
     if (score < 25) return { 
       level: 'Beginning', 
-      color: 'text-red-600 bg-red-50 border-red-200', 
+      color: 'text-neutral-700 bg-neutral-50 border-neutral-200', 
       message: theme.name === 'Tech4Good South West'
         ? 'You\'re at the start of your digital journey. Exciting times ahead!'
-        : 'You\'re at the start of your AI journey. This is exciting - you have the most to gain!',
+        : 'Perfect! You\'re standing at the door of opportunity. AI is about to become your team\'s new best friend.',
       priority: theme.name === 'Tech4Good South West'
         ? 'Join our community and connect with others on similar journeys'
-        : 'Focus on building awareness and getting leadership buy-in'
+        : 'Start with quick wins - show your team what "AI that actually helps" looks like'
     };
     if (score < 50) return { 
       level: 'Developing', 
-      color: 'text-orange-600 bg-orange-50 border-orange-200', 
+      color: 'text-neutral-700 bg-surface-200 border-surface-300', 
       message: theme.name === 'Tech4Good South West'
         ? 'You\'ve made a start with technology. Let\'s amplify your impact.'
-        : 'You\'ve made a start with AI. Now it\'s time to build momentum.',
+        : 'Great start! You\'ve dipped your toes in the AI waters. Time to dive in and make some waves.',
       priority: theme.name === 'Tech4Good South West'
         ? 'Focus on high-impact digital tools for your mission'
-        : 'Develop clear policies and run targeted pilots'
+        : 'Scale what\'s working and show your team how much time they can reclaim'
     };
     if (score < 75) return { 
       level: 'Advancing', 
-      color: 'text-blue-600 bg-blue-50 border-blue-200', 
+      color: 'text-primary-700 bg-primary-50 border-primary-200', 
       message: theme.name === 'Tech4Good South West'
         ? 'You\'re leveraging tech well. Time to share your learnings!'
-        : 'You\'re well positioned for AI success. Let\'s optimise and scale.',
+        : 'Impressive! You\'re already living the Level AI dream. Your team knows what "AI that actually helps" means.',
       priority: theme.name === 'Tech4Good South West'
         ? 'Share your knowledge with the Tech4Good community'
-        : 'Focus on measurement and sharing productivity gains'
+        : 'Time to become the AI success story everyone wants to copy'
     };
     return { 
       level: 'Leading', 
-      color: 'text-green-600 bg-green-50 border-green-200', 
+      color: 'text-success-800 bg-success-100 border-success-300', 
       message: theme.name === 'Tech4Good South West'
         ? 'You\'re a digital leader! Help others follow your path.'
-        : 'You\'re ahead of the curve! Time to lead by example.',
+        : 'Wow! You\'re not just AI-ready, you\'re AI-legendary. Your team has probably forgotten what manual work feels like.',
       priority: theme.name === 'RAISE Foundation'
         ? 'Share your learnings and pursue RAISE certification'
-        : 'Become a case study and mentor for others'
+        : 'You\'re the poster child for "reclaiming time with AI that actually helps" - let\'s showcase your success!'
     };
+  };
+
+  const calculateRealisticTimeSavings = () => {
+    const teamSize = answers['team-size'] || '1-10';
+    const productivityGoal = answers['productivity-goals'] || '20';
+    
+    // Get team size factor (more conservative for larger teams due to coordination overhead)
+    let teamFactor;
+    if (teamSize.includes('1-10')) {
+      teamFactor = 25; // Small teams: 15-35 hours total
+    } else if (teamSize.includes('11-50')) {
+      teamFactor = 60; // Medium teams: 40-80 hours total  
+    } else if (teamSize.includes('51-200')) {
+      teamFactor = 90; // Large teams: 60-120 hours total
+    } else {
+      teamFactor = 115; // Very large teams: 80-150 hours total
+    }
+    
+    // Productivity goal modifier (conservative)
+    let goalModifier;
+    if (productivityGoal.includes('10')) {
+      goalModifier = 0.6; // Conservative implementation
+    } else if (productivityGoal.includes('20')) {
+      goalModifier = 1.0; // Baseline expectation
+    } else if (productivityGoal.includes('30')) {
+      goalModifier = 1.3; // Optimistic but realistic
+    } else {
+      goalModifier = 1.5; // Aggressive but capped
+    }
+    
+    // Calculate realistic savings (much more conservative)
+    const totalSavings = Math.round(teamFactor * goalModifier);
+    
+    // Cap at reasonable maximums
+    return Math.min(totalSavings, 150);
   };
 
   const getRecommendations = (scores) => {
@@ -600,6 +643,7 @@ const AssessmentTool = () => {
 
     const scores = calculateDetailedScore();
     const interpretation = getScoreInterpretation(scores.overall);
+    const recommendations = getRecommendations(scores);
 
     try {
       // Save to Supabase with theme info
@@ -613,8 +657,49 @@ const AssessmentTool = () => {
         answers: answers,
         scores: scores,
         interpretation: interpretation.level,
+        benchmark_consent: benchmarkConsent,
         created_at: new Date().toISOString()
       });
+
+      // Generate PDF for email attachment
+      const pdfDoc = (
+        <PDFReport
+          userDetails={userDetails}
+          scores={scores}
+          interpretation={interpretation}
+          recommendations={recommendations}
+          answers={answers}
+          theme={theme}
+        />
+      );
+      
+      const pdfBlob = await pdf(pdfDoc).toBlob();
+      const pdfBuffer = await pdfBlob.arrayBuffer();
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
+
+      // Send email with PDF attachment (non-blocking)
+      try {
+        const emailResponse = await fetch('/api/send-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: userDetails.email,
+            name: userDetails.name,
+            organisation: userDetails.organisation,
+            theme: theme.name,
+            scores: scores,
+            interpretation: interpretation,
+            pdfData: pdfBase64
+          })
+        });
+        
+        if (!emailResponse.ok) {
+          console.warn('Email sending failed, but assessment was saved');
+        }
+      } catch (emailError) {
+        console.warn('Email sending error:', emailError);
+        // Continue anyway - assessment is already saved
+      }
 
       // Send to HubSpot via your n8n webhook
       if (process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL) {
@@ -635,6 +720,12 @@ const AssessmentTool = () => {
             }
           })
         });
+      }
+
+      // Fetch benchmark data if user consented
+      if (benchmarkConsent) {
+        const benchmarks = await BenchmarkService.getBenchmarkData(answers, scores);
+        setBenchmarkData(benchmarks);
       }
 
       // Clear local storage
@@ -660,21 +751,33 @@ const AssessmentTool = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="text-4xl mb-4">{theme.logo}</div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">{theme.messaging.reportTitle}</h1>
-            <p className="text-lg text-gray-600">
+            <div className="mb-4 flex justify-center">
+              {theme.logo.startsWith('/') ? (
+                <Image
+                  src={theme.logo}
+                  alt="Level AI Avatar"
+                  width={64}
+                  height={64}
+                  className="rounded-full"
+                />
+              ) : (
+                <div className="text-4xl">{theme.logo}</div>
+              )}
+            </div>
+            <h1 className="text-4xl font-bold text-neutral-800 mb-2">{theme.messaging.reportTitle}</h1>
+            <p className="text-lg text-neutral-500">
               {userDetails.name} · {userDetails.organisation}
             </p>
           </div>
 
           {/* Main Score Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 mb-8">
+          <div className="card mb-8">
             <div className="grid md:grid-cols-2 gap-8 mb-8">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Overall Readiness</h2>
+                <h2 className="text-2xl font-bold text-neutral-800 mb-4">Overall Readiness</h2>
                 <div className="mb-6">
                   <div className="flex items-baseline gap-4 mb-2">
-                    <span className="text-5xl font-bold text-gray-900">{scores.overall}%</span>
+                    <span className="text-5xl font-bold text-neutral-800">{scores.overall}%</span>
                     <span className={`text-sm font-semibold px-3 py-1 rounded-full border ${interpretation.color}`}>
                       {interpretation.level}
                     </span>
@@ -685,26 +788,26 @@ const AssessmentTool = () => {
                       className={`h-3 rounded-full bg-gradient-to-r ${theme.colors.gradient} transition-all duration-1000`}
                     />
                   </div>
-                  <p className="text-gray-700">{interpretation.message}</p>
-                  <p className="text-sm text-gray-600 mt-2">
+                  <p className="text-neutral-500">{interpretation.message}</p>
+                  <p className="text-sm text-neutral-500 mt-2">
                     <strong>Priority:</strong> {interpretation.priority}
                   </p>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Section Breakdown</h3>
+                <h3 className="text-lg font-semibold text-neutral-800 mb-4">Section Breakdown</h3>
                 <div className="space-y-3">
                   {Object.entries(scores.sections).map(([sectionId, data]) => (
                     <div key={sectionId}>
                       <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-700">{data.title}</span>
-                        <span className="font-semibold text-gray-900">{data.score}%</span>
+                        <span className="text-neutral-500">{data.title}</span>
+                        <span className="font-semibold text-neutral-800">{data.score}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-neutral-200 rounded-full h-2">
                         <div 
                           style={{ width: `${data.score}%` }} 
-                          className="h-2 rounded-full bg-gradient-to-r from-gray-400 to-gray-600"
+                          className="h-2 rounded-full bg-gradient-to-r from-primary-400 to-primary-500"
                         />
                       </div>
                     </div>
@@ -715,7 +818,7 @@ const AssessmentTool = () => {
 
             {/* Recommendations */}
             <div className="border-t pt-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Your Personalised Action Plan</h3>
+              <h3 className="text-xl font-bold text-neutral-800 mb-6">Your Personalised Action Plan</h3>
               <div className="grid md:grid-cols-3 gap-6">
                 {recommendations.map((rec, index) => (
                   <div key={index} className="bg-gray-50 rounded-lg p-6">
@@ -724,8 +827,8 @@ const AssessmentTool = () => {
                         {rec.icon}
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-1">{rec.title}</h4>
-                        <p className="text-sm text-gray-600">{rec.description}</p>
+                        <h4 className="font-semibold text-neutral-800 mb-1">{rec.title}</h4>
+                        <p className="text-sm text-neutral-500">{rec.description}</p>
                       </div>
                     </div>
                   </div>
@@ -737,32 +840,53 @@ const AssessmentTool = () => {
             <div className={`mt-8 p-6 ${theme.colors.primaryLight} rounded-lg`}>
               <h4 className={`font-semibold ${theme.colors.primaryLightText} mb-2`}>Potential Time Savings</h4>
               <p className={`text-sm ${theme.colors.primaryLightText}`}>
-                Based on your team size and target productivity gains, {theme.name === 'Tech4Good South West' ? 'technology' : 'AI'} could save your organisation approximately{' '}
-                <strong>{Math.round((parseInt(answers['team-size']?.split('-')[0] || 10) * parseInt(answers['productivity-goals'] || 20) * 2))} {theme.messaging.timeUnit}</strong>.
-                That's like gaining an extra team member!
+                Based on your responses, {theme.name === 'Tech4Good South West' ? 'technology' : 'AI that actually helps'} could give your team approximately{' '}
+                <strong>{calculateRealisticTimeSavings()} {theme.messaging.timeUnit}</strong>.
+                Imagine what your team could do with all that extra time! 🚀
               </p>
             </div>
           </div>
 
           {/* CTA Section */}
-          <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="card">
             <div className="text-center">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to Take the Next Step?</h3>
-              <p className="text-gray-600 mb-6">
+              <h3 className="text-2xl font-bold text-neutral-800 mb-4">Ready to Reclaim Your Time?</h3>
+              <p className="text-neutral-500 mb-6">
                 {theme.name === 'Tech4Good South West'
                   ? 'Join our community of purpose-driven organisations using tech for good.'
-                  : 'Get your detailed 15-page personalised report with specific recommendations for your organisation.'}
+                  : 'Let\'s turn this assessment into action. Get your personalised roadmap for implementing AI that actually helps your team.'}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="flex items-center justify-center gap-2 bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg hover:bg-gray-300 transition-colors">
-                  <Download className="w-5 h-5" />
-                  Download Full Report
-                </button>
+                <PDFDownloadLink
+                  document={
+                    <PDFReport
+                      userDetails={userDetails}
+                      scores={scores}
+                      interpretation={interpretation}
+                      recommendations={recommendations}
+                      answers={answers}
+                      theme={theme}
+                    />
+                  }
+                  fileName={`${userDetails.name.replace(/\s+/g, '-')}-AI-Readiness-Roadmap.pdf`}
+                  className="flex items-center justify-center gap-2 bg-surface-200 text-neutral-500 font-semibold py-3 px-6 rounded-lg hover:bg-surface-300 transition-colors"
+                >
+                  {({ blob, url, loading, error }) => (
+                    loading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-neutral-600 border-t-transparent rounded-full animate-spin" />
+                        Generating PDF...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-5 h-5" />
+                        Get Your AI Roadmap
+                      </>
+                    )
+                  )}
+                </PDFDownloadLink>
                 <button 
-                  className={`flex items-center justify-center gap-2 text-white font-semibold py-3 px-6 rounded-lg transition-colors`}
-                  style={{ backgroundColor: theme.colors.primary }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = theme.colors.primaryHover}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = theme.colors.primary}
+                  className="btn-primary flex items-center justify-center gap-2"
                 >
                   {theme.messaging.ctaButton}
                   <ArrowRight className="w-5 h-5" />
@@ -771,9 +895,18 @@ const AssessmentTool = () => {
             </div>
           </div>
 
+          {/* Benchmark Analytics */}
+          <div className="mt-8">
+            <BenchmarkAnalytics 
+              benchmarkData={benchmarkData}
+              userScores={scores}
+              theme={theme}
+            />
+          </div>
+
           {/* Footer */}
           <div className="text-center mt-8">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-neutral-500">
               Powered by {theme.name} · {theme.tagline}
             </p>
           </div>
@@ -786,24 +919,24 @@ const AssessmentTool = () => {
     return (
       <div className={`min-h-screen bg-gradient-to-br ${theme.colors.bgGradient} py-12 px-4 flex items-center`}>
         <div className="max-w-md mx-auto w-full">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="card">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Check className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-success-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{theme.messaging.completionTitle}</h2>
-              <p className="text-gray-600">
+              <h2 className="text-2xl font-bold text-neutral-800 mb-2">{theme.messaging.completionTitle}</h2>
+              <p className="text-neutral-500">
                 {theme.messaging.completionText}
               </p>
             </div>
 
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-neutral-500 mb-1">
                   Email Address *
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-500" />
                   <input
                     type="email"
                     required
@@ -817,7 +950,7 @@ const AssessmentTool = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-neutral-500 mb-1">
                   Full Name *
                 </label>
                 <input
@@ -832,11 +965,11 @@ const AssessmentTool = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-neutral-500 mb-1">
                   Organisation *
                 </label>
                 <div className="relative">
-                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-500" />
                   <input
                     type="text"
                     required
@@ -850,7 +983,7 @@ const AssessmentTool = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-neutral-500 mb-1">
                   Role
                 </label>
                 <input
@@ -863,18 +996,33 @@ const AssessmentTool = () => {
                 />
               </div>
 
+              <div className="bg-surface-50 p-4 rounded-lg border border-surface-200">
+                <label className="flex items-start space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={benchmarkConsent}
+                    onChange={(e) => setBenchmarkConsent(e.target.checked)}
+                    className="mt-1 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
+                  />
+                  <div className="text-sm">
+                    <div className="font-medium text-neutral-700">Help improve benchmarks</div>
+                    <div className="text-neutral-500">
+                      Include my anonymous data in future benchmarking insights to help other organizations. 
+                      Your personal information will never be shared.
+                    </div>
+                  </div>
+                </label>
+              </div>
+
               <div className="pt-4">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  style={{ backgroundColor: theme.colors.primary }}
-                  onMouseEnter={(e) => !isSubmitting && (e.target.style.backgroundColor = theme.colors.primaryHover)}
-                  onMouseLeave={(e) => !isSubmitting && (e.target.style.backgroundColor = theme.colors.primary)}
+                  className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
                       Processing...
                     </>
                   ) : (
@@ -886,7 +1034,7 @@ const AssessmentTool = () => {
                 </button>
               </div>
 
-              <p className="text-xs text-gray-500 text-center mt-4">
+              <p className="text-xs text-neutral-500 text-center mt-4">
                 By submitting, you agree to receive relevant resources from {theme.name}.
                 We respect your privacy and won't spam you.
               </p>
@@ -902,43 +1050,55 @@ const AssessmentTool = () => {
       <div className="max-w-2xl mx-auto">
         {/* Header with branding */}
         <div className="text-center mb-8">
-          <div className="text-4xl mb-2">{theme.logo}</div>
-          <h1 className="text-2xl font-bold text-gray-900">{theme.messaging.heroTitle}</h1>
-          <p className="text-gray-600">{theme.messaging.heroSubtitle}</p>
+          <div className="mb-2 flex justify-center">
+            {theme.logo.startsWith('/') ? (
+              <Image
+                src={theme.logo}
+                alt="Level AI Avatar"
+                width={64}
+                height={64}
+                className="rounded-full"
+              />
+            ) : (
+              <div className="text-4xl">{theme.logo}</div>
+            )}
+          </div>
+          <h1 className="text-2xl font-bold text-neutral-800">{theme.messaging.heroTitle}</h1>
+          <p className="text-neutral-500">{theme.messaging.heroSubtitle}</p>
         </div>
 
         {/* Progress bar */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-600">Progress</span>
-            <span className="text-sm font-medium text-gray-600">{answeredQuestions} of {totalQuestions}</span>
+            <span className="text-sm font-medium text-neutral-500">Progress</span>
+            <span className="text-sm font-medium text-neutral-500">{answeredQuestions} of {totalQuestions}</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-neutral-200 rounded-full h-2 shadow-inner">
             <div 
-              className={`bg-gradient-to-r ${theme.colors.gradient} h-2 rounded-full transition-all duration-300`}
+              className={`bg-gradient-to-r ${theme.colors.gradient} h-2 rounded-full transition-all duration-500 shadow-sm`}
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
         {/* Main card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+        <div className="card">
           {/* Section header */}
-          <div className="mb-8">
+          <div className="mb-8 p-4 bg-surface-100 rounded-xl">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: `${theme.colors.primary}20` }}>
+              <div className="p-3 rounded-xl bg-primary-100 border border-primary-200">
                 {currentSectionData.icon}
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">{currentSectionData.title}</h2>
-                <p className="text-sm text-gray-600">{currentSectionData.description}</p>
+                <h2 className="text-xl font-bold text-neutral-800">{currentSectionData.title}</h2>
+                <p className="text-sm text-neutral-500">{currentSectionData.description}</p>
               </div>
             </div>
           </div>
 
           {/* Question */}
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+            <h3 className="text-lg font-semibold text-neutral-800 mb-6">
               {currentQuestionData.question}
             </h3>
             
@@ -955,7 +1115,7 @@ const AssessmentTool = () => {
                     className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
                       isSelected 
                         ? 'border-current bg-opacity-5' 
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-neutral-200 hover:border-primary-300 hover:bg-surface-50'
                     }`}
                     style={{ 
                       borderColor: isSelected ? theme.colors.primary : undefined,
@@ -963,7 +1123,7 @@ const AssessmentTool = () => {
                     }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-800">{option.label}</span>
+                      <span className="font-medium text-neutral-500">{option.label}</span>
                       {isSelected && (
                         <Check className="w-5 h-5 flex-shrink-0 ml-2" style={{ color: theme.colors.primary }} />
                       )}
@@ -974,7 +1134,7 @@ const AssessmentTool = () => {
             </div>
 
             {currentQuestionData.type === 'multiple' && (
-              <p className="text-sm text-gray-500 mt-3">Select all that apply</p>
+              <p className="text-sm text-neutral-500 mt-3">Select all that apply</p>
             )}
           </div>
 
@@ -990,7 +1150,7 @@ const AssessmentTool = () => {
                 }
               }}
               disabled={currentSection === 0 && currentQuestion === 0}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
@@ -1000,8 +1160,8 @@ const AssessmentTool = () => {
               {sections.map((_, index) => (
                 <div
                   key={index}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    index === currentSection ? 'bg-current' : 'bg-gray-300'
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    index === currentSection ? 'bg-current shadow-md scale-110' : 'bg-neutral-300 hover:bg-neutral-400'
                   }`}
                   style={{ backgroundColor: index === currentSection ? theme.colors.primary : undefined }}
                 />
@@ -1012,7 +1172,7 @@ const AssessmentTool = () => {
               <button
                 onClick={advanceQuestion}
                 disabled={!answers[currentQuestionData.id] || answers[currentQuestionData.id].length === 0}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next
                 <ChevronRight className="w-4 h-4" />
@@ -1025,11 +1185,11 @@ const AssessmentTool = () => {
 
         {/* Footer */}
         <div className="text-center mt-6">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-neutral-500">
             <Clock className="w-4 h-4 inline mr-1" />
-            Takes about 5 minutes · Your progress is saved automatically
+            5 minutes to discover how much time AI can give back to your team
           </p>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-neutral-500 mt-2">
             {theme.name} · {theme.tagline}
           </p>
         </div>
